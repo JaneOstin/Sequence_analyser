@@ -44,21 +44,22 @@ def find_genes_proteins(input_gbk: str):
     proteins_list = []
     genes_list = []
     for line_number in range(len(lines_file)):
-        if lines_file[line_number].find('/gene=') != -1:
-            gene_name = lines_file[line_number].split('"')[1]
-            seq = ''
-            line_number_protein_start = line_number + 1
-            while lines_file[line_number_protein_start].find('/translation') == -1:
-                line_number_protein_start += 1
-            line_number_protein_end = line_number_protein_start + 1
-            while lines_file[line_number_protein_end].find('"') == -1:
-                line_number_protein_end += 1
-            seq += lines_file[line_number_protein_start].split('"')[1].strip()
-            for number in range(line_number_protein_start + 1, line_number_protein_end):
-                seq += lines_file[number].strip()
-            seq += lines_file[line_number_protein_end].split('"')[0].strip()
-            genes_list.append(gene_name)
-            proteins_list.append(seq)
+        if lines_file[line_number].find('/gene=') == -1:
+            continue
+        gene_name = lines_file[line_number].split('"')[1]
+        seq = ''
+        line_number_protein_start = line_number + 1
+        while lines_file[line_number_protein_start].find('/translation') == -1:
+            line_number_protein_start += 1
+        line_number_protein_end = line_number_protein_start + 1
+        while lines_file[line_number_protein_end].find('"') == -1:
+            line_number_protein_end += 1
+        seq += lines_file[line_number_protein_start].split('"')[1].strip()
+        for number in range(line_number_protein_start + 1, line_number_protein_end):
+            seq += lines_file[number].strip()
+        seq += lines_file[line_number_protein_end].split('"')[0].strip()
+        genes_list.append(gene_name)
+        proteins_list.append(seq)
     return genes_list, proteins_list
 
 
@@ -70,7 +71,7 @@ def find_genes_before_after(genes: list, genes_list: list, proteins_list: list, 
             index = genes_list.index(gene)
             number_before = index-1
             count_before = 1
-            while (number_before > -1 and count_before < n_before + 1) == True:
+            while (number_before > -1 and count_before < n_before + 1):
                 genes_output.append(genes_list[number_before])
                 proteins_output.append(proteins_list[number_before])
                 number_before += 1
@@ -100,8 +101,7 @@ def path_output_fasta(input_gbk: str, output_fasta: str):
     if output_fasta == '':
         file_name = input_gbk.split("/")[-1]
         return os.path.join(path, 'output_' + file_name.split(".gbk")[0] + '.fasta')
-    else:
-        return os.path.join(path, output_fasta)
+    return os.path.join(path, output_fasta)
     
 
 def write_output_fasta_file(genes_output: list, proteins_output: list, output_fasta_file: str):

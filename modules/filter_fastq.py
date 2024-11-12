@@ -9,32 +9,19 @@ def quality(seq: str, qual_treshhold: float = 0):
     if len_seq == 0:
         return None
     else:
-        return qual_sum/len_seq
+        return qual_sum / len_seq
 
 
 def gc_content_filter(gc_content_seq: float, gc_bounds: tuple):
-    if gc_content_seq is None :
-        return False
-    elif gc_content_seq >= gc_bounds[0] and gc_content_seq <= gc_bounds[1]:
-        return True
-    else:
-        return False
+    return gc_content_seq is not None and gc_bounds[0] <= gc_content_seq <= gc_bounds[1]
     
 
 def lenght_filter(seq_len: int, length_bounds: tuple):
-    if seq_len >= length_bounds[0] and seq_len <= length_bounds[1]:
-        return True
-    else:
-        return False
-    
+    return seq_len >= length_bounds[0] and seq_len <= length_bounds[1]
+
 
 def qual_filter(qual_seq: float, quality_threshold: float):
-    if qual_seq is None:
-        return False
-    elif qual_seq > quality_threshold:
-        return True
-    else:
-        return False
+    return qual_seq is not None and qual_seq > quality_threshold
     
 
 def read_fastq_file(input_fastq: str):

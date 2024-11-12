@@ -1,12 +1,14 @@
 from modules.filter_fastq import read_fastq_file
-from modules.bio_files_processor_module import path_output
-from modules.bio_files_processor_module import write_fasta_file
-from modules.bio_files_processor_module import find_protein
-from modules.bio_files_processor_module import write_output_protein_file
-from modules.bio_files_processor_module import find_genes_proteins
-from modules.bio_files_processor_module import find_genes_before_after
-from modules.bio_files_processor_module import path_output_fasta
-from modules.bio_files_processor_module import write_output_fasta_file
+from modules.bio_files_processor_module import (
+    path_output,
+    write_fasta_file,
+    find_protein,
+    write_output_protein_file,
+    find_genes_proteins,
+    find_genes_before_after,
+    path_output_fasta,
+    write_output_fasta_file,
+)
 
 
 def convert_multiline_fasta_to_oneline(input_fasta:str, output_fasta:str = ''):
