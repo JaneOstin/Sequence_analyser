@@ -50,8 +50,12 @@ def complement_proc(comp_seq: str, nucl_acid: str):
 
 def gc_content(gc_seq: str):
     gc_seq = gc_seq.upper()
-    count_gc = (gc_seq.count('G') + gc_seq.count('C')) * 100 / len(gc_seq)
-    return count_gc
+    len_seq = len(gc_seq)
+    if len_seq == 0:
+        return None
+    else:
+        count_gc = (gc_seq.count('G') + gc_seq.count('C')) * 100 / len_seq
+        return count_gc
 
 
 def rev_comp(seq: str, nucl: str):
