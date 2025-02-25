@@ -1,57 +1,190 @@
-from modules.run_dna_rna_tools import nucl_acid
-from modules.run_dna_rna_tools import proc_dna
-from modules.run_dna_rna_tools import proc_rna
-from modules.run_dna_rna_tools import gc_content
-from modules.filter_fastq import quality
-from modules.filter_fastq import gc_content_filter
-from modules.filter_fastq import lenght_filter
-from modules.filter_fastq import qual_filter
-from modules.filter_fastq import read_fastq_file
-from modules.filter_fastq import fastq_dict
-from modules.filter_fastq import path_output
-from modules.filter_fastq import write_output
+from abc import ABC, abstractmethod
+from Bio import SeqIO, SeqUtils
+import os
 
 
-def run_dna_rna_tools(*seq: str):
-    '''Function can transcribe, reverse, complement,
-    reverse_comp RNA/DNA and find gc_content
-    '''
-    result = []
-    operation = seq[-1]
-    for i in seq[:-1]:
-        cur_nucl_acid = nucl_acid(i)
-        if cur_nucl_acid == "dna":
-            result.append(proc_dna(i, operation))
-        elif cur_nucl_acid == "rna":
-            result.append(proc_rna(i, operation))
+class BiologicalSequence(ABC):
+    '''Abstract method for working with biological sequences, 
+    containing 5 abstract methods'''
+    @abstractmethod
+    def __len__(self):
+        pass
+
+    @abstractmethod
+    def __getitem__(self, index):
+        pass
+
+    @abstractmethod
+    def __str__(self):
+        pass
+
+    @abstractmethod
+    def __repr__(self):
+        pass
+
+    @abstractmethod
+    def check_alphabet(self) -> bool:
+        pass
+
+
+class NucleicAcidSequence(BiologicalSequence):
+    '''Class for dealing with nucleic acid sequences - parent class BiologicalSequence. 
+    Contains dunder methods, as well as methods for alphabet validation, sequence flipping, 
+    complement and both functions, and GC content counting'''
+    def __init__(self, sequence: str):
+        self.sequence = sequence
+
+    def __len__(self):
+        return len(self.sequence)
+
+    def __getitem__(self, index):
+        if isinstance(index, slice):
+            return self.sequence[index.start:index.stop:index.step]
         else:
-            result.append("It is not DNA or RNA")
-    if len(result) == 1:
-        return result[0]
-    else:
-        return result
+            return self.sequence[index]
+
+    def __str__(self):
+        return f'{self.sequence}'
+
+    def __repr__(self):
+        return f'Nucleic Acid Sequence: {self.sequence}'
+
+    def check_alphabet(self) -> bool:
+        if set(self.sequence.upper()).issubset(self.alphabet):
+            return True
+        else:
+            return False
+
+    def reverse(self):
+        return self.sequence[::-1]
+
+    def complement(self):
+        try:
+            return ''.join([self.vocab[i] for i in self.sequence])
+        except:
+            raise NotImplementedError('Make an example or check sequence for alphabet') from None
+
+    def reverse_complement(self):
+        return self.complement()[::-1]
+
+    def gc_content(self):
+        gc_seq = self.sequence.upper()
+        len_seq = len(gc_seq)
+        if len_seq == 0:
+            return None
+        else:
+            count_gc = (gc_seq.count('G') + gc_seq.count('C')) * 100 / len_seq
+            return count_gc
+
+
+class DNASequence(NucleicAcidSequence):
+    '''Class for working with DNA sequences - parent class NucleicAcidSequence. 
+    Contains function for transcribing sequence'''
+    alphabet = set(["A", "T", "G", "C"])
+    vocab = {
+        'A': 'T',
+        'a': 't',
+        'T': 'A',
+        't': 'a',
+        'G': 'C',
+        'g': 'c',
+        'C': 'G',
+        'c': 'g'
+    }
+
+    def __init__(self, sequence: str):
+        super().__init__(sequence)
+
+    def transcribe(self):
+        trans_seq = self.sequence.replace('T', 'U')
+        trans_seq = trans_seq.replace('t', 'u')
+        return trans_seq
+
+
+class RNASequence(NucleicAcidSequence):
+    '''Class for working with RNA sequences - parent class NucleicAcidSequence.'''
+    alphabet = set(["A", "U", "G", "C"])
+    vocab = {
+        'A': 'U',
+        'a': 'u',
+        'U': 'A',
+        'u': 'a',
+        'G': 'C',
+        'g': 'c',
+        'C': 'G',
+        'c': 'g'
+    }
+
+    def __init__(self, sequence: str):
+        super().__init__(sequence)
+
+
+class AminoAcidSequence(BiologicalSequence):
+    '''Class for working with protein sequences - parent class BiologicalSequence.
+    Contains dunder methods, as well as methods for alphabet validation and counting
+    amino acid frequency in a sequence'''
+    def __init__(self, sequence: str):
+        self.sequence = sequence
+
+    def __len__(self):
+        return len(self.sequence)
+
+    def __getitem__(self, index):
+        if isinstance(index, slice):
+            return self.sequence[index.start:index.stop:index.step]
+        else:
+            return self.sequence[index]
+
+    def __str__(self):
+        return f'{self.sequence}'
+
+    def __repr__(self):
+        return f'Amino Acid Sequence: {self.sequence}'
+
+    def check_alphabet(self) -> bool:
+        alphabet = set("ACDEFGHIKLMNPQRSTVWY")
+        return set(self.sequence.upper()).issubset(alphabet)
+
+    def aa_frequency(self):
+        aa_freq = {}
+        for amino_acid in self.sequence:
+            if amino_acid in aa_freq:
+                aa_freq[amino_acid] += 1
+            else:
+                aa_freq[amino_acid] = 1
+        return aa_freq
 
 
 def filter_fastq(
-        input_fastq:str, output_fastq:str = '', gc_bounds: tuple = (0, 100),
+        input_fastq: str, output_fastq: str = '', gc_bounds: tuple = (0, 100),
         length_bounds: tuple = (0, 2**32),
         quality_threshold: float = 0):
     '''Function can filter fastq files by gc_content, length and quality
     gc_bounds, length_bounds and quality_threshold can also be int or float
     As a result it makes a new fastq file with filtered sequences
     '''
-    lines_fastq = read_fastq_file(input_fastq)
-    seqs = fastq_dict(lines_fastq)
-    filtred_fastq_seq = {}
+    fastq_dict = {record.id: record for record in SeqIO.parse(input_fastq, "fastq")}
+    filtred_fastq_seq = []
+    path = '/'.join(input_fastq.split("/")[:-1]) + '/filtered'
+
     if not isinstance(gc_bounds, tuple):
         gc_bounds = (0, gc_bounds)
+
     if not isinstance(length_bounds, tuple):
         length_bounds = (0, length_bounds)
-    for seq_name, (sequence, seq_name_double, seq_quality) in seqs.items():
-        qual_seq = quality(seq_quality, quality_threshold)
-        gc_content_seq = gc_content(sequence)
-        seq_len = len(sequence)
-        if gc_content_filter(gc_content_seq, gc_bounds) and lenght_filter(seq_len, length_bounds) and qual_filter(qual_seq, quality_threshold):
-            filtred_fastq_seq[seq_name] = [sequence, seq_name_double, seq_quality]
-    output_file = path_output(input_fastq, output_fastq)
-    write_output(filtred_fastq_seq, output_file)
+
+    if output_fastq == '':
+        path = os.path.join(path, 'output_' + input_fastq.split("/")[-1])
+    else:
+        path = os.path.join(path, output_fastq)
+
+    for seq_name, record in fastq_dict.items():
+        seq_len = len(record.seq)
+        qual_seq = sum(record.letter_annotations["phred_quality"]) / seq_len
+        gc_content_seq = SeqUtils.gc_fraction(record.seq) * 100
+        if (length_bounds[1] >= seq_len >= length_bounds[0]) and (gc_bounds[0] <= gc_content_seq <= gc_bounds[1]) and (qual_seq > quality_threshold):
+            filtred_fastq_seq.append(SeqIO.SeqRecord(record.seq, id=seq_name, description=record.description, letter_annotations=record.letter_annotations))
+
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w") as output_fastq:
+        SeqIO.write(filtred_fastq_seq, output_fastq, "fastq")

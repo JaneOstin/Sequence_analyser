@@ -1,4 +1,3 @@
-from modules.filter_fastq import read_fastq_file
 from modules.bio_files_processor_module import (
     path_output,
     write_fasta_file,
@@ -20,7 +19,8 @@ def convert_multiline_fasta_to_oneline(input_fasta:str, output_fasta:str = ''):
 
 def parse_blast_output(input_file: str, output_file: str = ''):
     '''Function can extract genes for each query in alphabetic oder'''
-    lines_file = read_fastq_file(input_file)
+    with open(input_file) as input_file:
+        lines_file = input_file.readlines()
     output_protein_file = path_output(input_file, output_file)
     list_protein = find_protein(lines_file)
     write_output_protein_file(list_protein, output_protein_file)
