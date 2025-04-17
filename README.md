@@ -1,4 +1,4 @@
-# HW 5. Sequence analyser and bio files processor
+# HW 15. Sequence analyser and bio files processor
 
 ## Content
 
@@ -10,14 +10,14 @@
 
 ## What is it?
 
-This is a toolkit for working with sequnces and bioinformation files. It can filter FASTQ files, convert multiline FASTA files to oneline, parse BLAST files, select genes from GBK file to FASTA file. 
+This is a toolkit for working with sequnces and bioinformation files. It can filter FASTQ files, convert multiline FASTA files to oneline, parse BLAST files, select genes from GBK file to FASTA file and work with RNA/DNA/protein sequences. 
 
 
 ## Installation
 
 The source code is currently hosted on GitHub at: https://github.com/JaneOstin/Sequence_analyser
 
-This repository contains a package with bioinformatic utilities. The main project file is `seq_analyser.py` and `bio_files_processor.py`. The auxiliary modules are located in the `modules` folder and are represented by the files `run_dna_rna_tools.py`, `filter_fastq.py` and `bio_files_processor_module.py`. A visual structure of the repository is presented below.
+This repository contains a package with bioinformatic utilities. The main project file is `seq_analyser.py` and `bio_files_processor.py`. The auxiliary modules are located in the `modules` folder and are represented by the `bio_files_processor_module.py`. A visual structure of the repository is presented below.
 
     ```
     -/
@@ -25,8 +25,6 @@ This repository contains a package with bioinformatic utilities. The main projec
      |- seq_analyser.py
      |- bio_files_processor.py
      |- modules/
-           |- run_dna_rna_tools.py
-           |- filter_fastq.py
            |- bio_files_processor_module.py
     ``` 
 
@@ -34,15 +32,20 @@ This repository contains a package with bioinformatic utilities. The main projec
 
 ### Sequence analyser
 
-There are two functions in the `seq_analyser.py` file:
+There are several options in the `seq_analyser.py` file:
 
-1. The `run_dna_rna_tools` function takes a sequence as input, checks if it is RNA/DNA, and processes it depending on the argument given. This function can do the following from the list:
-    - `transcribe` - transcribe DNA
-    - `reverse` - reverse the sequence
-    - `complement` - build complementary sequence
-    - `reverse_complement` - unfold and build complementary sequence
-    - `gc_content_in_percentage` - count GC composition of the sequence 
-    - The function outputs a single string or a list of strings after transformation. If the submitted string is not RNA/DNA or the argument is not in the list, then the function will report it
+1. There are several classes to work with RNA/DNA/protein sequences:
+    - Abstract class `BiologicalSequence` with 5 abstract methods: `__len__`, `__getitem__`, `__str__`, `__repr__`, `check_alphabet`
+    - Class `NucleicAcidSequence` - parent class `BiologicalSequence` - with 5 methods: `__len__`, `__getitem__` (also works with clices), `__str__`, `__repr__`, `check_alphabet` (to validate the sequence origin), plus 4 specific for sequences methods: 
+        - `reverse` - reverse the sequence
+        - `complement` - build complementary sequence
+        - `reverse_complement` - unfold and build complementary sequence
+        - `gc_content` - count GC composition of the sequence 
+    - Class `DNASequence` - parent class `NucleicAcidSequence` - all methods from above class plus 1 dpecific method for DNA sequence:
+        - `transcribe` - transcribe DNA
+    - Class `RNASequence` - parent class `NucleicAcidSequence` with it methods
+    - Class `AminoAcidSequence` - parent class `BiologicalSequence` - with 6 methods: `__len__`, `__getitem__` (also works with clices), `__str__`, `__repr__`, `check_alphabet` (to validate the sequence origin), plus 1 specific for protein sequences method:
+        - `aa_frequency` - count the frequency of occurrence of each amino acid in the sequence
 
 2. The `filter_fastq` function takes as input the path to the fastq file, as well as the optional arguments `output_fastq`, `gc_bounds`, `length_bounds`, `quality_threshold`:
     - `input_fastq` - the path to the fastq file
@@ -72,14 +75,18 @@ There are three functions in the `bio_files_processor.py` file:
 
 ## Examples
 
-There are examples of using `run_dna_rna_tools` function:
+There are examples of using `seq_analyser.py` with its classes:
 
 ```python
-run_dna_rna_tools('ATG', 'transcribe') # 'AUG'
-run_dna_rna_tools('ATG', 'reverse') # 'GTA'
-run_dna_rna_tools('AtG', 'complement') # 'TaC'
-run_dna_rna_tools('ATg', 'reverse_complement') # 'cAT'
-run_dna_rna_tools('ATG', 'aT', 'reverse') # ['GTA', 'Ta']
+dna = seq_analyser.DNASequence('ATGCGCTAG')
+dna[2:7:2] #'GGT'
+dna.reverse_complement() #'CTAGCGCAT'
+
+rna = seq_analyser.RNASequence('AUGC')
+rna.check_alphabet() #True
+
+protein = seq_analyser.AminoAcidSequence('WHILK')
+protein.aa_frequency() #{'W': 1, 'H': 1, 'I': 1, 'L': 1, 'K': 1}
 ```
 
 After using `seq_analyser.py` and exactly `filter_fastq` function you will see a new folder. So, the structure of the repository will be:
@@ -91,8 +98,6 @@ After using `seq_analyser.py` and exactly `filter_fastq` function you will see a
      |- bio_files_processor.py
      |- example_fastq.fastq
      |- modules/
-           |- run_dna_rna_tools.py
-           |- filter_fastq.py
            |- bio_files_processor_module.py
      |- filtered/
            |- output_example_fastq.fastq
@@ -157,9 +162,8 @@ Example of output file `select_genes_from_gbk_to_fasta` function (example of inp
 
 <img src="meme.jpg" width="800"/>
 
-PS. It is not true picture, because while I was doing this toolkit I also didn't eat, drink and sleep as an experimental biologist 🥹
-
 Don't hesitate to contact me on any questions about this toolkit!
 
 Author: Antonina Kuznetsova
+
 Email: kuznetsova.antonina@outlook.com
