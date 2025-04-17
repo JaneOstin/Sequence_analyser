@@ -1,4 +1,4 @@
-# HW 15. Sequence analyser and bio files processor
+# HW 18. Sequence analyser and bio files processor
 
 ## Content
 
@@ -24,6 +24,7 @@ This repository contains a package with bioinformatic utilities. The main projec
      |- README.md
      |- seq_analyser.py
      |- bio_files_processor.py
+     |- fastq_filter_test.py
      |- modules/
            |- bio_files_processor_module.py
     ``` 
@@ -49,10 +50,18 @@ There are several options in the `seq_analyser.py` file:
 
 2. The `filter_fastq` function takes as input the path to the fastq file, as well as the optional arguments `output_fastq`, `gc_bounds`, `length_bounds`, `quality_threshold`:
     - `input_fastq` - the path to the fastq file
-    - `output_fastq` - the result of function is a filtered file in the folder `/filtered/`, with output_ appended to the name, or saved exactly as specified
+    - `output_fastq` - the result of function is a filtered file in the folder `/filtered/`, with output_ appended to the name, or saved exactly as specified. Also in the same directory will be `.log` file.
     - `gc_bounds` - GC composition interval (in per cent) for filtering (default is (0, 100), i.e. all reads are preserved). If a single number is passed in the argument, it is assumed to be the upper bound. Examples: `gc_bounds = (20, 80)` - save only reads with GC composition from 20 to 80%, `gc_bounds = 44.4` - save reads with GC composition less than 44.4%
     - `length_bounds` - length interval for filtering, all similar to `gc_bounds`, but defaults to (0, 2**32)
     - `quality_threshold` - threshold value of the average quality of the read for filtering, default value is 0 (phred33 scale). Reads with average quality for all nucleotides below the threshold are discarded
+
+❗️ Also `filter_fastq` function can be run from the command line:
+
+    python seq_analyser.py example_fastq.fastq --output_fastq output.fastq --gc 40 60 --length 50 150 --quality 30
+
+✅ If you want to change something, you can check that the `filter_fastq` function is working correctly with `fastq_filter_test.py`. There you can find 8 verification tests.
+
+    pytest fastq_filter_test.py
 
 ### Bio files processor
 
