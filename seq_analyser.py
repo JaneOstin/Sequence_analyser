@@ -1,6 +1,9 @@
 from abc import ABC, abstractmethod
 from Bio import SeqIO, SeqUtils
+
 import os
+import argparse
+import logging
 
 
 class BiologicalSequence(ABC):
@@ -167,6 +170,8 @@ def filter_fastq(
     filtred_fastq_seq = []
     path = '/'.join(input_fastq.split("/")[:-1]) + '/filtered'
 
+    logging.basicConfig(filename=os.path.join(path, 'fastq-filter.log'), filemode='w', level=logging.INFO)
+
     if not isinstance(gc_bounds, tuple):
         gc_bounds = (0, gc_bounds)
 
@@ -175,6 +180,7 @@ def filter_fastq(
 
     if output_fastq == '':
         path = os.path.join(path, 'output_' + input_fastq.split("/")[-1])
+        logging.error('No output file name, used the same as input')
     else:
         path = os.path.join(path, output_fastq)
 
@@ -188,3 +194,39 @@ def filter_fastq(
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w") as output_fastq:
         SeqIO.write(filtred_fastq_seq, output_fastq, "fastq")
+
+    logging.info('Filtering is done!')
+    
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Filter a FASTQ file by GC content, length, and quality threshold")
+
+    parser.add_argument("input_fastq", help="Path for input file")
+    parser.add_argument("-o", "--output_fastq", default='', help="Path for output file (same as input by default)")
+    parser.add_argument("--gc", type=float, nargs='+', default=(0, 100), help="GC% to filter (--gc 40 60)")
+    parser.add_argument("--length", type=int, nargs='+', default=(0, 2**32), help="Length of sequence (--length 50 150)")
+    parser.add_argument("--quality", type=float, default=0, help="Treshold for quality  (например, --quality 30)")
+
+    args = parser.parse_args()
+
+    if len(args.gc) == 1:
+        gc_bounds = (0, int(args.gc[0]))
+    elif len(args.gc) == 2:
+        gc_bounds = tuple(args.gc)
+    else:
+        parser.error("--gc takes 1 or 2 values")
+
+    if len(args.length) == 1:
+        length_bounds = (0, int(args.length[0]))
+    elif len(args.length) == 2:
+        length_bounds = tuple(args.length)
+    else:
+        parser.error("--length takes 1 or 2 values")
+
+    filter_fastq(
+        args.input_fastq,
+        args.output_fastq,
+        gc_bounds,
+        length_bounds,
+        args.quality
+    )
